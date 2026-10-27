@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="description" content="38개국 국기 퀴즈 게임 - 4지선다, 국기 고르기, 주관식, 타임어택, 서바이벌, 넘겨보기, 도감">
+<meta name="description" content="42개국 국기 퀴즈 게임 - 4지선다, 국기 고르기, 주관식, 타임어택, 서바이벌, 넘겨보기, 도감">
 <title>국기 맞히기</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -28,7 +28,7 @@
   --shadow:0 1px 0 rgba(0,0,0,.3),0 6px 18px rgba(0,0,0,.25); color-scheme:dark}
 *{box-sizing:border-box}
 body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:16px;line-height:1.5;
-  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:20px 40px}
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:20px 84px}
 .wrap{max-width:720px;margin:0 auto;display:flex;flex-direction:column;gap:20px}
 button{font:inherit;color:inherit;cursor:pointer}
 button:focus-visible,input:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
@@ -95,6 +95,9 @@ h1,h2{font-family:var(--f-display);font-weight:400;margin:0;text-wrap:balance;le
 .seg{display:inline-flex;border:1px solid var(--line);border-radius:8px;overflow:hidden}
 .seg button{background:none;border:none;padding:6px 12px;font-size:14px}
 .seg button[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink);font-weight:700}
+.sndbtn{position:fixed;right:calc(16px + env(safe-area-inset-right,0px));bottom:calc(16px + env(safe-area-inset-bottom,0px));z-index:20;display:inline-flex;align-items:center;gap:6px;background:var(--surface);color:var(--ink);border:1px solid var(--line);border-radius:999px;padding:8px 14px;font-size:14px;box-shadow:var(--shadow)}
+.sndbtn svg{width:18px;height:18px}
+.sndbtn[aria-pressed="false"]{color:var(--muted)}
 @keyframes pop{from{transform:scale(.97)}to{transform:scale(1)}}
 @keyframes shake{25%{transform:translateX(-5px)}75%{transform:translateX(5px)}}
 .shake{animation:shake .25s}
@@ -106,27 +109,89 @@ h1,h2{font-family:var(--f-display);font-weight:400;margin:0;text-wrap:balance;le
 <body>
 <div class="wrap" id="app"></div>
 <script>
-const C = [["es", "스페인"], ["sg", "싱가포르"], ["se", "스웨덴"], ["ch", "스위스"], ["us", "미국"], ["vn", "베트남"], ["my", "말레이시아"], ["mx", "멕시코"], ["de", "독일"], ["ru", "러시아"], ["tw", "대만"], ["dk", "덴마크"], ["no", "노르웨이"], ["au", "호주"], ["ar", "아르헨티나"], ["nl", "네덜란드"], ["kr", "대한민국"], ["nz", "뉴질랜드"], ["fi", "핀란드"], ["ph", "필리핀"], ["it", "이탈리아"], ["in", "인도"], ["il", "이스라엘"], ["eg", "이집트"], ["iq", "이라크"], ["ir", "이란"], ["gb", "영국"], ["at", "오스트리아"], ["tr", "터키"], ["fr", "프랑스"], ["cu", "쿠바"], ["th", "태국"], ["cl", "칠레"], ["ca", "캐나다"], ["jp", "일본"], ["cn", "중국"], ["gr", "그리스"], ["id", "인도네시아"]];
+const C = [["es", "스페인"], ["sg", "싱가포르"], ["se", "스웨덴"], ["ch", "스위스"], ["us", "미국"], ["vn", "베트남"], ["my", "말레이시아"], ["mx", "멕시코"], ["de", "독일"], ["ru", "러시아"], ["tw", "대만"], ["dk", "덴마크"], ["no", "노르웨이"], ["au", "호주"], ["ar", "아르헨티나"], ["nl", "네덜란드"], ["kr", "대한민국"], ["nz", "뉴질랜드"], ["fi", "핀란드"], ["ph", "필리핀"], ["it", "이탈리아"], ["in", "인도"], ["il", "이스라엘"], ["eg", "이집트"], ["iq", "이라크"], ["ir", "이란"], ["gb", "영국"], ["at", "오스트리아"], ["tr", "터키"], ["fr", "프랑스"], ["cu", "쿠바"], ["th", "태국"], ["cl", "칠레"], ["ca", "캐나다"], ["jp", "일본"], ["cn", "중국"], ["gr", "그리스"], ["id", "인도네시아"], ["br", "브라질"], ["sa", "사우디아라비아"], ["be", "벨기에"], ["kp", "북한"]];
 const FLAGS = Object.fromEntries(C.map(([c])=>[c,`flags/${c}.svg`]));
 // 주관식에서 함께 인정하는 다른 이름
 const ALIAS = {kr:["한국","남한","대한민국"],tr:["튀르키예","터키"],tw:["타이완","대만"],au:["오스트레일리아","호주"],
   gb:["영국","잉글랜드","유나이티드킹덤"],us:["미국","미합중국"],nl:["네덜란드","홀란드"],ch:["스위스"],ph:["필리핀"],
   my:["말레이시아"],vn:["베트남","월남"],cn:["중국","중화인민공화국"],jp:["일본"],id:["인도네시아"],gr:["그리스"],
-  ru:["러시아"],de:["독일"],at:["오스트리아"],fi:["핀란드"],se:["스웨덴"],no:["노르웨이"],dk:["덴마크"],nz:["뉴질랜드"]};
+  ru:["러시아"],de:["독일"],at:["오스트리아"],fi:["핀란드"],se:["스웨덴"],no:["노르웨이"],dk:["덴마크"],nz:["뉴질랜드"],
+  kp:["북한","조선","조선민주주의인민공화국"],sa:["사우디아라비아","사우디"],br:["브라질"],be:["벨기에"]};
 // 헷갈리기 쉬운 국기끼리 묶음 (보기 섞을 때 사용)
 const LOOK = [["nl","ru","fr"],["au","nz","gb"],["no","dk","fi","se","ch"],["iq","eg"],["id","sg"],["cl","cu","us","my"],
-  ["it","mx","ir","in"],["at","dk","ch","tr"],["de","be"],["cn","vn","tw"],["th","cu","cl"],["jp","kr"],["gr","il","fi"],["ar","gr","il"],["ph","cu","cz"]];
+  ["it","mx","ir","in"],["at","dk","ch","tr"],["de","be"],["kp","kr","cu"],["sa","ir","iq"],["br","ar"],["cn","vn","tw"],["th","cu","cl"],["jp","kr"],["gr","il","fi"],["ar","gr","il"],["ph","cu","cz"]];
 const byCode = Object.fromEntries(C.map(([c,n])=>[c,n]));
 const MODES = [
   {id:"flag2name", name:"국기 보고 나라 맞히기", desc:"국기를 보고 4개 중 나라 이름을 고르세요. 10문제.", kind:"count"},
   {id:"name2flag", name:"나라 보고 국기 맞히기", desc:"나라 이름을 보고 4개 국기 중 하나를 고르세요. 10문제.", kind:"count"},
   {id:"type", name:"직접 써서 맞히기", desc:"보기 없이 나라 이름을 입력하세요. 10문제, 힌트 있음.", kind:"count"},
   {id:"time", name:"60초 타임어택", desc:"60초 동안 최대한 많이 맞히세요. 틀리면 3초 감점.", kind:"time"},
-  {id:"survival", name:"서바이벌", desc:"38개국 전부 도전! 목숨은 3개.", kind:"lives"},
+  {id:"survival", name:"서바이벌", desc:"42개국 전부 도전! 목숨은 3개.", kind:"lives"},
   {id:"reel", name:"국기 넘겨보기", desc:"국기 → 이름 → 국기 → 이름 순서로 자동으로 쭉 넘어가요.", kind:"reel"},
-  {id:"dex", name:"국기 도감", desc:"38개 국기를 살펴보고 외워 보세요.", kind:"study"},
+  {id:"dex", name:"국기 도감", desc:"42개 국기를 살펴보고 외워 보세요.", kind:"study"},
 ];
 const $ = s=>document.querySelector(s);
+/* ---------- 효과음 (Web Audio 합성) ---------- */
+const SFX=(()=>{
+  let ctx=null,on=true;
+  try{on=localStorage.getItem("flagSound")!=="off"}catch(e){}
+  const ac=()=>{ if(!ctx){const A=window.AudioContext||window.webkitAudioContext; if(!A) return null; ctx=new A();}
+    if(ctx.state==="suspended") ctx.resume(); return ctx; };
+  function tone(f,t0,dur,o={}){
+    const c=ac(); if(!c) return;
+    const {type="sine",vol=.18,to=null,attack=.008}=o, t=c.currentTime+t0;
+    const osc=c.createOscillator(), g=c.createGain();
+    osc.type=type; osc.frequency.setValueAtTime(f,t);
+    if(to) osc.frequency.exponentialRampToValueAtTime(to,t+dur);
+    g.gain.setValueAtTime(.0001,t); g.gain.exponentialRampToValueAtTime(vol,t+attack);
+    g.gain.exponentialRampToValueAtTime(.0001,t+dur);
+    osc.connect(g).connect(c.destination); osc.start(t); osc.stop(t+dur+.03);
+  }
+  function noise(t0,dur,o={}){
+    const c=ac(); if(!c) return;
+    const {vol=.12,from=600,to=3000,q=1.2}=o, t=c.currentTime+t0;
+    const len=Math.ceil(c.sampleRate*dur), buf=c.createBuffer(1,len,c.sampleRate), d=buf.getChannelData(0);
+    for(let i=0;i<len;i++) d[i]=Math.random()*2-1;
+    const src=c.createBufferSource(), bp=c.createBiquadFilter(), g=c.createGain();
+    src.buffer=buf; bp.type="bandpass"; bp.Q.value=q;
+    bp.frequency.setValueAtTime(from,t); bp.frequency.exponentialRampToValueAtTime(to,t+dur);
+    g.gain.setValueAtTime(.0001,t); g.gain.exponentialRampToValueAtTime(vol,t+dur*.3); g.gain.exponentialRampToValueAtTime(.0001,t+dur);
+    src.connect(bp).connect(g).connect(c.destination); src.start(t); src.stop(t+dur+.02);
+  }
+  const seq=(notes,step,o)=>notes.forEach((f,i)=>tone(f,i*step,o.dur||step*1.6,o));
+  const P={
+    click:()=>tone(700,0,.05,{type:"triangle",vol:.1}),
+    // 모드 시작: 퀴즈는 밝은 딩동, 타임어택은 출발 신호, 서바이벌은 북소리, 넘겨보기는 부드러운 종, 도감은 책장 넘김
+    start_count:()=>{tone(784,0,.14,{type:"triangle"});tone(1175,.1,.25,{type:"triangle"})},
+    start_time:()=>{[0,.22,.44].forEach(t=>tone(660,t,.1,{type:"square",vol:.08}));tone(1320,.66,.32,{type:"square",vol:.1})},
+    start_lives:()=>{tone(110,0,.3,{vol:.4,to:55});tone(110,.28,.3,{vol:.4,to:55});seq([392,523,659],.09,{type:"sawtooth",vol:.06,dur:.18})},
+    start_reel:()=>{tone(1047,0,.6,{vol:.12});tone(1568,.08,.6,{vol:.08})},
+    start_study:()=>noise(0,.25,{vol:.1,from:2500,to:800}),
+    // 정답: 연속 정답일수록 음이 한 칸씩 올라감
+    right:(k=1)=>{const m=Math.pow(2,Math.min(k-1,10)/12); tone(880*m,0,.12,{type:"triangle"}); tone(1320*m,.08,.22,{type:"triangle"})},
+    right_fast:(k=1)=>{const m=Math.pow(2,Math.min(k-1,12)/12); tone(1046*m,0,.09,{type:"square",vol:.08}); tone(1568*m,.05,.12,{type:"square",vol:.07})},
+    wrong:()=>{tone(196,0,.3,{type:"sawtooth",vol:.1,to:150});tone(185,.02,.3,{type:"square",vol:.05,to:140})},
+    penalty:()=>{tone(330,0,.12,{type:"square",vol:.08,to:220});tone(220,.12,.2,{type:"square",vol:.08,to:150})},
+    heart:()=>{tone(150,0,.4,{vol:.4,to:50});noise(0,.18,{vol:.12,from:400,to:150})},
+    heartbeat:()=>{tone(70,0,.16,{vol:.45,to:45});tone(65,.2,.18,{vol:.35,to:40})},
+    hint:()=>{tone(1200,0,.12,{vol:.1,to:1500});tone(1500,.08,.18,{vol:.08})},
+    tick:()=>tone(1600,0,.035,{type:"square",vol:.05}),
+    timeup:()=>{seq([784,659,523,392],.11,{type:"square",vol:.08,dur:.16})},
+    gameover:()=>{seq([392,370,349,311],.22,{type:"sawtooth",vol:.08,dur:.3})},
+    clear:()=>{seq([523,659,784,1047],.1,{type:"triangle",vol:.14,dur:.2});[523,659,784].forEach(f=>tone(f,.45,.6,{type:"triangle",vol:.08}))},
+    record:()=>{seq([523,659,784,1047,1319],.08,{type:"triangle",vol:.13,dur:.18});[1568,2093,2637].forEach((f,i)=>tone(f,.5+i*.07,.3,{vol:.06}))},
+    end:()=>{tone(659,0,.18,{type:"triangle",vol:.12});tone(523,.15,.35,{type:"triangle",vol:.12})},
+    whoosh:()=>noise(0,.22,{vol:.08,from:500,to:2600}),
+    reveal:()=>{tone(1047,0,.35,{vol:.12});tone(1568,.06,.4,{vol:.07})},
+    flip:()=>noise(0,.12,{vol:.08,from:3000,to:1200,q:.8}),
+  };
+  return {
+    play(n,a){ if(!on) return; try{P[n]&&P[n](a)}catch(e){} },
+    get on(){return on},
+    toggle(){ on=!on; try{localStorage.setItem("flagSound",on?"on":"off")}catch(e){} if(on) P.click(); return on; }
+  };
+})();
+
 const app = $("#app");
 const shuffle = a=>{a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.random()*(i+1)|0;[a[i],a[j]]=[a[j],a[i]]}return a};
 const esc = s=>String(s).replace(/[&<>"]/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[m]));
@@ -152,17 +217,17 @@ function home(){
   const strip = shuffle(C).map(([c,n])=>img(c,n)).join("");
   app.innerHTML = `
     <header class="top">
-      <div><span class="label">38개국 · 국기 퀴즈</span><h1>국기 맞히기</h1><p>모드를 골라 시작하세요.</p></div>
+      <div><span class="label">42개국 · 국기 퀴즈</span><h1>국기 맞히기</h1><p>모드를 골라 시작하세요.</p></div>
     </header>
     <div class="strip" aria-hidden="true">${strip}</div>
     <section class="modes">${MODES.map(m=>`
       <button class="mode" data-m="${m.id}">
         <span class="label">${m.kind==="time"?"시간 제한":m.kind==="lives"?"목숨 3개":m.kind==="study"?"공부":m.kind==="reel"?"자동 재생":"10문제"}</span>
         <h2>${m.name}</h2><p>${m.desc}</p>
-        <span class="best">${m.kind==="study"||m.kind==="reel"?"38개국":best[m.id]!=null?`최고 기록 ${best[m.id]}${m.kind==="count"?" / 10":"점"}`:"아직 기록 없음"}</span>
+        <span class="best">${m.kind==="study"||m.kind==="reel"?"42개국":best[m.id]!=null?`최고 기록 ${best[m.id]}${m.kind==="count"?" / 10":"점"}`:"아직 기록 없음"}</span>
       </button>`).join("")}
     </section>`;
-  app.querySelectorAll(".mode").forEach(b=>b.onclick=()=>start(b.dataset.m));
+  app.querySelectorAll(".mode").forEach(b=>b.onclick=()=>{const k=MODES.find(x=>x.id===b.dataset.m).kind; SFX.play("start_"+({count:"count",time:"time",lives:"lives",reel:"reel",study:"study"}[k])); start(b.dataset.m)});
 }
 
 /* ---------- 게임 상태 ---------- */
@@ -173,7 +238,7 @@ function start(mode){
   S = {mode, deck:shuffle(C.map(x=>x[0])), i:0, score:0, missed:[], lives:3, time:60, locked:false, timer:null, total:0};
   if(MODES.find(m=>m.id===mode).kind==="count") S.deck = S.deck.slice(0,10);
   if(mode==="time"){
-    const run=S; S.timer = setInterval(()=>{if(S!==run)return; S.time--; updHud(); if(S.time<=0){clearInterval(S.timer); finish();}},1000);
+    const run=S; S.timer = setInterval(()=>{if(S!==run)return; S.time--; updHud(); if(S.time>0&&S.time<=10) SFX.play("tick"); if(S.time<=0){clearInterval(S.timer); SFX.play("timeup"); finish();}},1000);
   }
   ask();
 }
@@ -212,12 +277,12 @@ function ask(){
       <div class="opts">${opts.map((c,k)=>`<button class="opt" data-c="${c}"><span class="k">${k+1}</span>${byCode[c]}</button>`).join("")}</div>`;
   }
   app.innerHTML = hud() + `<div class="card pop" id="card">${body}<div class="fb" id="fb" aria-live="polite"></div></div>`;
-  $("#quit").onclick=home;
+  $("#quit").onclick=()=>{SFX.play("click");home()};
   app.querySelectorAll(".opt").forEach(b=>b.onclick=()=>choose(b.dataset.c));
   if(S.mode==="type"){
     const ti=$("#ti"); ti.focus();
     $("#tf").onsubmit=e=>{e.preventDefault(); if(!ti.value.trim())return; typed(ti.value)};
-    $("#h1").onclick=()=>{ti.placeholder=`${byCode[ans][0]}… (${byCode[ans].length}글자)`;S.hinted=true;ti.focus()};
+    $("#h1").onclick=()=>{SFX.play("hint");ti.placeholder=`${byCode[ans][0]}… (${byCode[ans].length}글자)`;S.hinted=true;ti.focus()};
     $("#h2").onclick=()=>typed("");
   }
 }
@@ -241,12 +306,13 @@ function typed(v){
 }
 function judge(ok, ans){
   const fb=$("#fb");
-  if(ok){ S.score += (S.mode==="type" && S.hinted)?0.5:1; fb.className="fb good"; fb.textContent=`정답! ${byCode[ans]}`; }
+  if(ok){ S.streak=(S.streak||0)+1; SFX.play(S.mode==="time"?"right_fast":"right", S.streak); S.score += (S.mode==="type" && S.hinted)?0.5:1; fb.className="fb good"; fb.textContent=`정답! ${byCode[ans]}`; }
   else {
+    S.streak=0; SFX.play(S.mode==="survival"?"heart":S.mode==="time"?"penalty":"wrong");
     S.missed.push(ans); fb.className="fb bad"; fb.textContent=`정답은 ${byCode[ans]}`;
     $("#card").classList.add("shake");
     if(S.mode==="time"){S.time=Math.max(0,S.time-3); updHud();}
-    if(S.mode==="survival"){S.lives--; const lv=$("#lv"); if(lv) lv.textContent="♥".repeat(S.lives)+"♡".repeat(3-S.lives);}
+    if(S.mode==="survival"){S.lives--; if(S.lives===1) setTimeout(()=>SFX.play("heartbeat"),550); const lv=$("#lv"); if(lv) lv.textContent="♥".repeat(S.lives)+"♡".repeat(3-S.lives);}
   }
   S.hinted=false;
   $("#sc").textContent=S.score;
@@ -266,10 +332,14 @@ function finish(){
   const prev = best[S.mode];
   const isNew = prev==null || S.score>prev;
   if(isNew){best[S.mode]=S.score; saveBest(best);}
+  const rec = isNew && S.score>0;
+  if(m.kind==="lives" && S.lives<=0){ SFX.play("gameover"); if(rec) setTimeout(()=>SFX.play("record"),1000); }
+  else if(m.kind==="time"){ setTimeout(()=>SFX.play(rec?"record":"end"),650); }
+  else SFX.play(rec?"record":(m.kind==="lives"||S.score>=6)?"clear":"end");
   let headline, sub;
   if(m.kind==="count"){headline=`${S.score} / ${S.deck.length}`; sub=S.score>=9?"국기 박사!":S.score>=6?"잘했어요!":"도감에서 한 번 더 보고 와요!";}
   else if(m.kind==="time"){headline=`${S.score}점`; sub=`60초 동안 ${S.score}개 정답`;}
-  else {headline=`${S.score}점`; sub=S.lives>0?"38개국 완주!":`${S.i}번째 문제에서 끝`;}
+  else {headline=`${S.score}점`; sub=S.lives>0?"42개국 완주!":`${S.i}번째 문제에서 끝`;}
   const uniq=[...new Set(S.missed)];
   app.innerHTML = `<div class="card result pop">
     <span class="label">${m.name}</span>
@@ -278,7 +348,7 @@ function finish(){
       <div class="miss">${uniq.map(c=>`<figure>${img(c,byCode[c])}<figcaption>${byCode[c]}</figcaption></figure>`).join("")}</div></div>`:""}
     <div class="row"><button class="primary" id="again">다시 하기</button><button class="ghost" id="back">모드 선택</button></div>
   </div>`;
-  $("#again").onclick=()=>start(S.mode); $("#back").onclick=home;
+  $("#again").onclick=()=>{const k=m.kind; SFX.play("start_"+k); start(S.mode)}; $("#back").onclick=()=>{SFX.play("click");home()};
 }
 
 /* ---------- 넘겨보기 ---------- */
@@ -309,9 +379,9 @@ function reel(){
     const [c,n]=R.order[R.i];
     $("#ri").textContent=R.i+1;
     $("#pb").style.width=((R.i+(R.phase==="name"?1:0.5))/C.length*100)+"%";
-    if(R.phase==="flag"){ $("#rf").innerHTML=img(c,"국기"); $("#rf").classList.remove("pop"); void $("#rf").offsetWidth; $("#rf").classList.add("pop");
+    if(R.phase==="flag"){ SFX.play("whoosh"); $("#rf").innerHTML=img(c,"국기"); $("#rf").classList.remove("pop"); void $("#rf").offsetWidth; $("#rf").classList.add("pop");
       $("#rn").className="reelname wait"; $("#rn").textContent="?"; }
-    else { $("#rn").className="reelname show"; $("#rn").textContent=n; }
+    else { SFX.play("reveal"); $("#rn").className="reelname show"; $("#rn").textContent=n; }
   };
   const step=d=>{
     if(d>0){ if(R.phase==="flag") R.phase="name"; else { R.phase="flag"; R.i=(R.i+1)%C.length; } }
@@ -320,7 +390,7 @@ function reel(){
   };
   const sched=()=>{ clearTimeout(reelT); if(R.playing && S===run) reelT=setTimeout(()=>{ if(S===run) step(1); }, R.speed*1000); };
   const setPlay=v=>{ R.playing=v; $("#rplay").textContent=v?"일시정지":"재생"; sched(); };
-  $("#quit").onclick=home;
+  $("#quit").onclick=()=>{SFX.play("click");home()};
   $("#rc").onclick=()=>step(1);
   $("#rx").onclick=()=>step(1);
   $("#rp").onclick=()=>step(-1);
@@ -343,13 +413,13 @@ function dex(){
   let hide=false, list=[...C].sort((a,b)=>a[1].localeCompare(b[1],"ko"));
   const render=()=>{
     app.innerHTML = `<div class="hud"><button class="ghost" id="quit">← 모드 선택</button><span class="label">국기 도감 · 가나다순</span></div>
-      <div class="dexbar"><h2 style="font-size:28px">38개국 국기</h2>
+      <div class="dexbar"><h2 style="font-size:28px">42개국 국기</h2>
         <button class="ghost" id="tg">${hide?"이름 모두 보이기":"이름 가리고 연습"}</button></div>
       <p class="q" style="text-align:left">${hide?"국기를 누르면 이름이 보여요.":"이름 가리기를 켜면 스스로 맞혀 볼 수 있어요."}</p>
       <div class="dex">${list.map(([c,n])=>`<button class="${hide?"hid":""}" data-c="${c}">${img(c,n)}<span class="nm">${n}</span></button>`).join("")}</div>`;
-    $("#quit").onclick=home;
-    $("#tg").onclick=()=>{hide=!hide;render()};
-    app.querySelectorAll(".dex button").forEach(b=>b.onclick=()=>b.classList.toggle("hid"));
+    $("#quit").onclick=()=>{SFX.play("click");home()};
+    $("#tg").onclick=()=>{SFX.play("flip");hide=!hide;render()};
+    app.querySelectorAll(".dex button").forEach(b=>b.onclick=()=>{b.classList.toggle("hid");SFX.play("flip")});
   };
   render();
 }
@@ -358,6 +428,10 @@ document.addEventListener("keydown",e=>{
   if(!S.mode||S.locked||document.activeElement?.tagName==="INPUT") return;
   const n=+e.key; if(n>=1&&n<=4){const b=app.querySelectorAll(".opt")[n-1]; if(b) b.click();}
 });
+(()=>{ const sb=document.createElement("button"); sb.className="sndbtn"; sb.id="snd";
+  const paint=()=>{ sb.setAttribute("aria-pressed",SFX.on);
+    sb.innerHTML=`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 5 6 9H3v6h3l5 4V5z" fill="currentColor"/>${SFX.on?'<path d="M15.5 8.5a5 5 0 0 1 0 7M18.5 5.5a9 9 0 0 1 0 13"/>':'<path d="m16 9 5 6M21 9l-5 6"/>'}</svg>${SFX.on?"소리 켜짐":"소리 꺼짐"}`; };
+  sb.onclick=()=>{SFX.toggle(); paint();}; paint(); document.body.appendChild(sb); })();
 home();
 </script>
 </body>
