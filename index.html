@@ -1,0 +1,364 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="description" content="38개국 국기 퀴즈 게임 - 4지선다, 국기 고르기, 주관식, 타임어택, 서바이벌, 넘겨보기, 도감">
+<title>국기 맞히기</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Black+Han+Sans&family=IBM+Plex+Sans+KR:wght@400;500;700&family=IBM+Plex+Mono:wght@500&display=swap">
+<style>
+/* Layout: a single passport-desk column; mode cards stamp in a grid, game screen = flag on top, answers below */
+:root{
+  --bg:#ECEFF3; --surface:#FFFFFF; --ink:#16233A; --muted:#5E6B80; --line:#D3D9E2;
+  --accent:#2649C9; --accent-ink:#FFFFFF; --good:#17824F; --good-bg:#E2F4EA; --bad:#C2352B; --bad-bg:#FBE6E3;
+  --shadow:0 1px 0 rgba(22,35,58,.06),0 6px 18px rgba(22,35,58,.07);
+  --f-display:"Black Han Sans","IBM Plex Sans KR","Apple SD Gothic Neo","Malgun Gothic",sans-serif;
+  --f-body:"IBM Plex Sans KR","Apple SD Gothic Neo","Malgun Gothic",system-ui,sans-serif;
+  --f-mono:"IBM Plex Mono",ui-monospace,Menlo,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#0F1624; --surface:#18223A; --ink:#E8ECF4; --muted:#9AA6BC; --line:#2B3854;
+  --accent:#7D9BFF; --accent-ink:#0F1624; --good:#5BD597; --good-bg:#173628; --bad:#FF8A7E; --bad-bg:#3A1D1D;
+  --shadow:0 1px 0 rgba(0,0,0,.3),0 6px 18px rgba(0,0,0,.25); color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0F1624; --surface:#18223A; --ink:#E8ECF4; --muted:#9AA6BC; --line:#2B3854;
+  --accent:#7D9BFF; --accent-ink:#0F1624; --good:#5BD597; --good-bg:#173628; --bad:#FF8A7E; --bad-bg:#3A1D1D;
+  --shadow:0 1px 0 rgba(0,0,0,.3),0 6px 18px rgba(0,0,0,.25); color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:16px;line-height:1.5;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:20px 40px}
+.wrap{max-width:720px;margin:0 auto;display:flex;flex-direction:column;gap:20px}
+button{font:inherit;color:inherit;cursor:pointer}
+button:focus-visible,input:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+h1,h2{font-family:var(--f-display);font-weight:400;margin:0;text-wrap:balance;letter-spacing:.01em}
+.top{display:flex;align-items:flex-end;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.top h1{font-size:clamp(34px,8vw,52px);line-height:1}
+.top p{margin:6px 0 0;color:var(--muted)}
+.strip{display:flex;gap:4px;overflow:hidden;height:24px;border-radius:3px;mask-image:linear-gradient(90deg,#000 80%,transparent)}
+.strip img{height:24px;width:32px;object-fit:cover;flex:none;border-radius:2px;box-shadow:0 0 0 1px var(--line)}
+.label{font-family:var(--f-mono);font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.modes{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:12px}
+.mode{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:16px;text-align:left;display:flex;flex-direction:column;gap:6px;transition:transform .15s,border-color .15s}
+.mode:hover{transform:translateY(-2px);border-color:var(--accent)}
+.mode h2{font-size:22px}
+.mode p{margin:0;color:var(--muted);font-size:14px}
+.mode .best{margin-top:auto;padding-top:8px;font-family:var(--f-mono);font-size:12px;color:var(--accent)}
+.hud{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.hud .stats{display:flex;gap:16px;font-family:var(--f-mono);font-variant-numeric:tabular-nums}
+.hud .stats b{font-size:20px}
+.ghost{background:none;border:1px solid var(--line);border-radius:8px;padding:6px 12px;font-size:14px}
+.ghost:hover{border-color:var(--ink)}
+.bar{height:6px;background:var(--line);border-radius:6px;overflow:hidden}
+.bar i{display:block;height:100%;background:var(--accent);transition:width .25s linear}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:20px;box-shadow:var(--shadow);display:flex;flex-direction:column;gap:18px;align-items:center}
+.flagbox{width:min(360px,100%);aspect-ratio:4/3;max-width:100%;border-radius:6px;overflow:hidden;box-shadow:0 0 0 1px var(--line),0 8px 24px rgba(22,35,58,.12)}
+.flagbox img{width:100%;height:100%;display:block;object-fit:cover}
+.prompt{font-family:var(--f-display);font-size:clamp(30px,7vw,44px);text-align:center;line-height:1.1}
+.q{color:var(--muted);text-align:center;margin:0}
+.opts{display:grid;grid-template-columns:1fr 1fr;gap:10px;width:100%}
+.opt{background:var(--bg);border:2px solid transparent;border-radius:10px;padding:14px 10px;font-size:18px;font-weight:500;transition:border-color .12s,background .12s}
+.opt:hover:not(:disabled){border-color:var(--accent)}
+.opt:disabled{cursor:default}
+.opt.flagopt{padding:8px}
+.opt.flagopt img{width:100%;aspect-ratio:4/3;object-fit:cover;display:block;border-radius:4px;box-shadow:0 0 0 1px var(--line)}
+.opt .k{font-family:var(--f-mono);font-size:12px;color:var(--muted);margin-right:6px}
+.opt.right{border-color:var(--good);background:var(--good-bg)}
+.opt.wrong{border-color:var(--bad);background:var(--bad-bg)}
+.opt.flagopt .cap{display:block;font-size:14px;margin-top:6px;min-height:1.5em}
+.typing{display:flex;gap:8px;width:100%}
+.typing input{flex:1;min-width:0;font:inherit;font-size:20px;padding:12px 14px;border-radius:10px;border:2px solid var(--line);background:var(--bg);color:var(--ink)}
+.primary{background:var(--accent);color:var(--accent-ink);border:none;border-radius:10px;padding:12px 18px;font-weight:700;font-size:16px}
+.primary:hover{filter:brightness(1.08)}
+.fb{min-height:28px;font-weight:700;text-align:center}
+.fb.good{color:var(--good)} .fb.bad{color:var(--bad)}
+.hint{display:flex;gap:8px;justify-content:center;flex-wrap:wrap}
+.lives{letter-spacing:2px;color:var(--bad)}
+.result{text-align:center;align-items:center}
+.result .big{font-family:var(--f-display);font-size:64px;line-height:1}
+.miss{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:10px;width:100%}
+.miss figure{margin:0;display:flex;flex-direction:column;gap:4px;font-size:14px;text-align:center}
+.miss img,.dex img{width:100%;aspect-ratio:4/3;object-fit:cover;border-radius:4px;box-shadow:0 0 0 1px var(--line)}
+.row{display:flex;gap:10px;flex-wrap:wrap;justify-content:center}
+.dex{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:14px}
+.dex button{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:10px;display:flex;flex-direction:column;gap:8px;text-align:left}
+.dex .nm{font-weight:700}
+.dex .hid .nm{color:transparent;background:var(--line);border-radius:4px}
+.dexbar{display:flex;gap:10px;align-items:center;justify-content:space-between;flex-wrap:wrap}
+.pop{animation:pop .25s ease}
+.reel{cursor:pointer;user-select:none}
+.reelname{font-family:var(--f-display);font-size:clamp(34px,8vw,52px);line-height:1.1;min-height:1.2em;text-align:center}
+.reelname.wait{color:var(--line)}
+.reelname.show{animation:pop .25s ease}
+.ctrl{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;align-items:center}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.seg button{background:none;border:none;padding:6px 12px;font-size:14px}
+.seg button[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink);font-weight:700}
+@keyframes pop{from{transform:scale(.97)}to{transform:scale(1)}}
+@keyframes shake{25%{transform:translateX(-5px)}75%{transform:translateX(5px)}}
+.shake{animation:shake .25s}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+@media (max-width:420px){.opt{font-size:16px;padding:12px 6px}.card{padding:14px}}
+</style>
+<style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style>
+</head>
+<body>
+<div class="wrap" id="app"></div>
+<script>
+const C = [["es", "스페인"], ["sg", "싱가포르"], ["se", "스웨덴"], ["ch", "스위스"], ["us", "미국"], ["vn", "베트남"], ["my", "말레이시아"], ["mx", "멕시코"], ["de", "독일"], ["ru", "러시아"], ["tw", "대만"], ["dk", "덴마크"], ["no", "노르웨이"], ["au", "호주"], ["ar", "아르헨티나"], ["nl", "네덜란드"], ["kr", "대한민국"], ["nz", "뉴질랜드"], ["fi", "핀란드"], ["ph", "필리핀"], ["it", "이탈리아"], ["in", "인도"], ["il", "이스라엘"], ["eg", "이집트"], ["iq", "이라크"], ["ir", "이란"], ["gb", "영국"], ["at", "오스트리아"], ["tr", "터키"], ["fr", "프랑스"], ["cu", "쿠바"], ["th", "태국"], ["cl", "칠레"], ["ca", "캐나다"], ["jp", "일본"], ["cn", "중국"], ["gr", "그리스"], ["id", "인도네시아"]];
+const FLAGS = Object.fromEntries(C.map(([c])=>[c,`flags/${c}.svg`]));
+// 주관식에서 함께 인정하는 다른 이름
+const ALIAS = {kr:["한국","남한","대한민국"],tr:["튀르키예","터키"],tw:["타이완","대만"],au:["오스트레일리아","호주"],
+  gb:["영국","잉글랜드","유나이티드킹덤"],us:["미국","미합중국"],nl:["네덜란드","홀란드"],ch:["스위스"],ph:["필리핀"],
+  my:["말레이시아"],vn:["베트남","월남"],cn:["중국","중화인민공화국"],jp:["일본"],id:["인도네시아"],gr:["그리스"],
+  ru:["러시아"],de:["독일"],at:["오스트리아"],fi:["핀란드"],se:["스웨덴"],no:["노르웨이"],dk:["덴마크"],nz:["뉴질랜드"]};
+// 헷갈리기 쉬운 국기끼리 묶음 (보기 섞을 때 사용)
+const LOOK = [["nl","ru","fr"],["au","nz","gb"],["no","dk","fi","se","ch"],["iq","eg"],["id","sg"],["cl","cu","us","my"],
+  ["it","mx","ir","in"],["at","dk","ch","tr"],["de","be"],["cn","vn","tw"],["th","cu","cl"],["jp","kr"],["gr","il","fi"],["ar","gr","il"],["ph","cu","cz"]];
+const byCode = Object.fromEntries(C.map(([c,n])=>[c,n]));
+const MODES = [
+  {id:"flag2name", name:"국기 보고 나라 맞히기", desc:"국기를 보고 4개 중 나라 이름을 고르세요. 10문제.", kind:"count"},
+  {id:"name2flag", name:"나라 보고 국기 맞히기", desc:"나라 이름을 보고 4개 국기 중 하나를 고르세요. 10문제.", kind:"count"},
+  {id:"type", name:"직접 써서 맞히기", desc:"보기 없이 나라 이름을 입력하세요. 10문제, 힌트 있음.", kind:"count"},
+  {id:"time", name:"60초 타임어택", desc:"60초 동안 최대한 많이 맞히세요. 틀리면 3초 감점.", kind:"time"},
+  {id:"survival", name:"서바이벌", desc:"38개국 전부 도전! 목숨은 3개.", kind:"lives"},
+  {id:"reel", name:"국기 넘겨보기", desc:"국기 → 이름 → 국기 → 이름 순서로 자동으로 쭉 넘어가요.", kind:"reel"},
+  {id:"dex", name:"국기 도감", desc:"38개 국기를 살펴보고 외워 보세요.", kind:"study"},
+];
+const $ = s=>document.querySelector(s);
+const app = $("#app");
+const shuffle = a=>{a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.random()*(i+1)|0;[a[i],a[j]]=[a[j],a[i]]}return a};
+const esc = s=>String(s).replace(/[&<>"]/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[m]));
+const img = (c,alt="국기")=>`<img src="${FLAGS[c]}" alt="${esc(alt)}" draggable="false">`;
+const norm = s=>s.replace(/\s+/g,"").toLowerCase();
+function loadBest(){try{return JSON.parse(localStorage.getItem("flagBest")||"{}")}catch(e){return {}}}
+function saveBest(b){try{localStorage.setItem("flagBest",JSON.stringify(b))}catch(e){}}
+let best = loadBest();
+
+function distractors(ans, n=3){
+  const pool = new Set();
+  const groups = LOOK.filter(g=>g.includes(ans));
+  if(groups.length && Math.random()<.75){
+    shuffle(groups.flat().filter(c=>c!==ans && byCode[c])).slice(0,Math.random()<.5?1:2).forEach(c=>pool.add(c));
+  }
+  for(const [c] of shuffle(C)){ if(pool.size>=n) break; if(c!==ans) pool.add(c); }
+  return shuffle([ans,...[...pool].slice(0,n)]);
+}
+
+/* ---------- 홈 ---------- */
+function home(){
+  clearInterval(S.timer); clearTimeout(reelT); S={};
+  const strip = shuffle(C).map(([c,n])=>img(c,n)).join("");
+  app.innerHTML = `
+    <header class="top">
+      <div><span class="label">38개국 · 국기 퀴즈</span><h1>국기 맞히기</h1><p>모드를 골라 시작하세요.</p></div>
+    </header>
+    <div class="strip" aria-hidden="true">${strip}</div>
+    <section class="modes">${MODES.map(m=>`
+      <button class="mode" data-m="${m.id}">
+        <span class="label">${m.kind==="time"?"시간 제한":m.kind==="lives"?"목숨 3개":m.kind==="study"?"공부":m.kind==="reel"?"자동 재생":"10문제"}</span>
+        <h2>${m.name}</h2><p>${m.desc}</p>
+        <span class="best">${m.kind==="study"||m.kind==="reel"?"38개국":best[m.id]!=null?`최고 기록 ${best[m.id]}${m.kind==="count"?" / 10":"점"}`:"아직 기록 없음"}</span>
+      </button>`).join("")}
+    </section>`;
+  app.querySelectorAll(".mode").forEach(b=>b.onclick=()=>start(b.dataset.m));
+}
+
+/* ---------- 게임 상태 ---------- */
+let S = {};
+function start(mode){
+  if(mode==="dex") return dex();
+  if(mode==="reel") return reel();
+  S = {mode, deck:shuffle(C.map(x=>x[0])), i:0, score:0, missed:[], lives:3, time:60, locked:false, timer:null, total:0};
+  if(MODES.find(m=>m.id===mode).kind==="count") S.deck = S.deck.slice(0,10);
+  if(mode==="time"){
+    const run=S; S.timer = setInterval(()=>{if(S!==run)return; S.time--; updHud(); if(S.time<=0){clearInterval(S.timer); finish();}},1000);
+  }
+  ask();
+}
+function hud(){
+  const m = MODES.find(x=>x.id===S.mode);
+  let right = "";
+  if(m.kind==="count") right = `<span>문제 <b>${S.i+1}</b>/${S.deck.length}</span>`;
+  if(m.kind==="time") right = `<span>남은 시간 <b id="tm">${S.time}</b>초</span>`;
+  if(m.kind==="lives") right = `<span class="lives" id="lv">${"♥".repeat(S.lives)}${"♡".repeat(3-S.lives)}</span><span><b>${S.i+1}</b>/${S.deck.length}</span>`;
+  const pct = m.kind==="time" ? S.time/60*100 : S.i/S.deck.length*100;
+  return `<div class="hud"><button class="ghost" id="quit">← 모드 선택</button>
+    <div class="stats"><span>점수 <b id="sc">${S.score}</b></span>${right}</div></div>
+    <div class="bar"><i id="pb" style="width:${pct}%"></i></div>`;
+}
+function updHud(){
+  const t=$("#tm"); if(t) t.textContent=Math.max(0,S.time);
+  const pb=$("#pb"); if(pb && S.mode==="time") pb.style.width=Math.max(0,S.time)/60*100+"%";
+}
+function ask(){
+  if(S.mode==="time" && S.i>=S.deck.length){ S.deck=S.deck.concat(shuffle(C.map(x=>x[0]))); }
+  if(S.i>=S.deck.length) return finish();
+  S.locked=false;
+  const ans = S.deck[S.i];
+  let body="";
+  if(S.mode==="name2flag"){
+    const opts = distractors(ans);
+    body = `<p class="q">이 나라의 국기는?</p><div class="prompt">${byCode[ans]}</div>
+      <div class="opts">${opts.map((c,k)=>`<button class="opt flagopt" data-c="${c}">${img(c,"보기 "+(k+1))}<span class="cap"><span class="k">${k+1}</span></span></button>`).join("")}</div>`;
+  } else if(S.mode==="type"){
+    body = `<div class="flagbox">${img(ans,"문제 국기")}</div><p class="q">어느 나라 국기일까요?</p>
+      <form class="typing" id="tf"><input id="ti" autocomplete="off" placeholder="나라 이름 입력" aria-label="나라 이름"><button class="primary">확인</button></form>
+      <div class="hint"><button class="ghost" id="h1" type="button">첫 글자 힌트</button><button class="ghost" id="h2" type="button">모르겠어요</button></div>`;
+  } else {
+    const opts = distractors(ans);
+    body = `<div class="flagbox">${img(ans,"문제 국기")}</div><p class="q">어느 나라 국기일까요?</p>
+      <div class="opts">${opts.map((c,k)=>`<button class="opt" data-c="${c}"><span class="k">${k+1}</span>${byCode[c]}</button>`).join("")}</div>`;
+  }
+  app.innerHTML = hud() + `<div class="card pop" id="card">${body}<div class="fb" id="fb" aria-live="polite"></div></div>`;
+  $("#quit").onclick=home;
+  app.querySelectorAll(".opt").forEach(b=>b.onclick=()=>choose(b.dataset.c));
+  if(S.mode==="type"){
+    const ti=$("#ti"); ti.focus();
+    $("#tf").onsubmit=e=>{e.preventDefault(); if(!ti.value.trim())return; typed(ti.value)};
+    $("#h1").onclick=()=>{ti.placeholder=`${byCode[ans][0]}… (${byCode[ans].length}글자)`;S.hinted=true;ti.focus()};
+    $("#h2").onclick=()=>typed("");
+  }
+}
+function choose(c){
+  if(S.locked) return; S.locked=true;
+  const ans=S.deck[S.i], ok=c===ans;
+  app.querySelectorAll(".opt").forEach(b=>{
+    b.disabled=true;
+    if(b.dataset.c===ans) b.classList.add("right");
+    else if(b.dataset.c===c) b.classList.add("wrong");
+    if(S.mode==="name2flag"){const cap=b.querySelector(".cap"); cap.innerHTML=`<span class="k">${byCode[b.dataset.c]}</span>`;}
+  });
+  judge(ok, ans);
+}
+function typed(v){
+  if(S.locked) return; S.locked=true;
+  const ans=S.deck[S.i];
+  const ok = !!v && [byCode[ans],...(ALIAS[ans]||[])].some(n=>norm(n)===norm(v));
+  $("#ti").disabled=true;
+  judge(ok, ans);
+}
+function judge(ok, ans){
+  const fb=$("#fb");
+  if(ok){ S.score += (S.mode==="type" && S.hinted)?0.5:1; fb.className="fb good"; fb.textContent=`정답! ${byCode[ans]}`; }
+  else {
+    S.missed.push(ans); fb.className="fb bad"; fb.textContent=`정답은 ${byCode[ans]}`;
+    $("#card").classList.add("shake");
+    if(S.mode==="time"){S.time=Math.max(0,S.time-3); updHud();}
+    if(S.mode==="survival"){S.lives--; const lv=$("#lv"); if(lv) lv.textContent="♥".repeat(S.lives)+"♡".repeat(3-S.lives);}
+  }
+  S.hinted=false;
+  $("#sc").textContent=S.score;
+  S.i++;
+  const wait = ok ? (S.mode==="time"?450:800) : 1500;
+  const run=S;
+  setTimeout(()=>{
+    if(S!==run) return;
+    if(S.mode==="time" && S.time<=0) return;
+    if(S.mode==="survival" && S.lives<=0) return finish();
+    ask();
+  }, wait);
+}
+function finish(){
+  clearInterval(S.timer);
+  const m = MODES.find(x=>x.id===S.mode);
+  const prev = best[S.mode];
+  const isNew = prev==null || S.score>prev;
+  if(isNew){best[S.mode]=S.score; saveBest(best);}
+  let headline, sub;
+  if(m.kind==="count"){headline=`${S.score} / ${S.deck.length}`; sub=S.score>=9?"국기 박사!":S.score>=6?"잘했어요!":"도감에서 한 번 더 보고 와요!";}
+  else if(m.kind==="time"){headline=`${S.score}점`; sub=`60초 동안 ${S.score}개 정답`;}
+  else {headline=`${S.score}점`; sub=S.lives>0?"38개국 완주!":`${S.i}번째 문제에서 끝`;}
+  const uniq=[...new Set(S.missed)];
+  app.innerHTML = `<div class="card result pop">
+    <span class="label">${m.name}</span>
+    <div class="big">${headline}</div><p class="q">${sub}${isNew&&S.score>0?" · 최고 기록!":""}</p>
+    ${uniq.length?`<div style="width:100%"><p class="label" style="margin:0 0 10px">틀린 국기 다시 보기</p>
+      <div class="miss">${uniq.map(c=>`<figure>${img(c,byCode[c])}<figcaption>${byCode[c]}</figcaption></figure>`).join("")}</div></div>`:""}
+    <div class="row"><button class="primary" id="again">다시 하기</button><button class="ghost" id="back">모드 선택</button></div>
+  </div>`;
+  $("#again").onclick=()=>start(S.mode); $("#back").onclick=home;
+}
+
+/* ---------- 넘겨보기 ---------- */
+let reelT=null;
+function reel(){
+  const R={order:shuffle(C), i:0, phase:"flag", speed:2, playing:true, mixed:true};
+  S={mode:"reel", locked:true};
+  const run=S;
+  app.innerHTML = `<div class="hud"><button class="ghost" id="quit">← 모드 선택</button>
+      <div class="stats"><span><b id="ri">1</b> / ${C.length}</span></div></div>
+    <div class="bar"><i id="pb" style="width:0%"></i></div>
+    <div class="card reel" id="rc" title="누르면 다음으로">
+      <div class="flagbox" id="rf"></div>
+      <div class="reelname wait" id="rn" aria-live="polite">?</div>
+    </div>
+    <div class="ctrl">
+      <button class="ghost" id="rp" aria-label="이전">◀ 이전</button>
+      <button class="primary" id="rplay">일시정지</button>
+      <button class="ghost" id="rx" aria-label="다음">다음 ▶</button>
+    </div>
+    <div class="ctrl">
+      <span class="label">속도</span>
+      <div class="seg" id="rs">${[[1,"빠르게"],[2,"보통"],[3.5,"천천히"]].map(([v,l])=>`<button data-v="${v}" aria-pressed="${v===2}">${l}</button>`).join("")}</div>
+      <div class="seg" id="ro"><button data-o="mix" aria-pressed="true">무작위</button><button data-o="abc" aria-pressed="false">가나다순</button></div>
+    </div>
+    <p class="q">국기가 먼저 나오고, 잠시 뒤 이름이 나와요. 화면을 누르거나 → 키로 넘길 수 있어요.</p>`;
+  const draw=()=>{
+    const [c,n]=R.order[R.i];
+    $("#ri").textContent=R.i+1;
+    $("#pb").style.width=((R.i+(R.phase==="name"?1:0.5))/C.length*100)+"%";
+    if(R.phase==="flag"){ $("#rf").innerHTML=img(c,"국기"); $("#rf").classList.remove("pop"); void $("#rf").offsetWidth; $("#rf").classList.add("pop");
+      $("#rn").className="reelname wait"; $("#rn").textContent="?"; }
+    else { $("#rn").className="reelname show"; $("#rn").textContent=n; }
+  };
+  const step=d=>{
+    if(d>0){ if(R.phase==="flag") R.phase="name"; else { R.phase="flag"; R.i=(R.i+1)%C.length; } }
+    else { if(R.phase==="name") R.phase="flag"; else { R.i=(R.i-1+C.length)%C.length; R.phase="name"; } }
+    draw(); sched();
+  };
+  const sched=()=>{ clearTimeout(reelT); if(R.playing && S===run) reelT=setTimeout(()=>{ if(S===run) step(1); }, R.speed*1000); };
+  const setPlay=v=>{ R.playing=v; $("#rplay").textContent=v?"일시정지":"재생"; sched(); };
+  $("#quit").onclick=home;
+  $("#rc").onclick=()=>step(1);
+  $("#rx").onclick=()=>step(1);
+  $("#rp").onclick=()=>step(-1);
+  $("#rplay").onclick=()=>setPlay(!R.playing);
+  $("#rs").querySelectorAll("button").forEach(b=>b.onclick=()=>{ R.speed=+b.dataset.v;
+    $("#rs").querySelectorAll("button").forEach(x=>x.setAttribute("aria-pressed",x===b)); sched(); });
+  $("#ro").querySelectorAll("button").forEach(b=>b.onclick=()=>{
+    R.order = b.dataset.o==="abc" ? [...C].sort((a,b)=>a[1].localeCompare(b[1],"ko")) : shuffle(C);
+    R.i=0; R.phase="flag";
+    $("#ro").querySelectorAll("button").forEach(x=>x.setAttribute("aria-pressed",x===b)); draw(); sched(); });
+  R.key=e=>{ if(S!==run) return document.removeEventListener("keydown",R.key);
+    if(e.key==="ArrowRight"){e.preventDefault();step(1)} else if(e.key==="ArrowLeft"){e.preventDefault();step(-1)}
+    else if(e.key===" "){e.preventDefault();setPlay(!R.playing)} };
+  document.addEventListener("keydown",R.key);
+  draw(); sched();
+}
+
+/* ---------- 도감 ---------- */
+function dex(){
+  let hide=false, list=[...C].sort((a,b)=>a[1].localeCompare(b[1],"ko"));
+  const render=()=>{
+    app.innerHTML = `<div class="hud"><button class="ghost" id="quit">← 모드 선택</button><span class="label">국기 도감 · 가나다순</span></div>
+      <div class="dexbar"><h2 style="font-size:28px">38개국 국기</h2>
+        <button class="ghost" id="tg">${hide?"이름 모두 보이기":"이름 가리고 연습"}</button></div>
+      <p class="q" style="text-align:left">${hide?"국기를 누르면 이름이 보여요.":"이름 가리기를 켜면 스스로 맞혀 볼 수 있어요."}</p>
+      <div class="dex">${list.map(([c,n])=>`<button class="${hide?"hid":""}" data-c="${c}">${img(c,n)}<span class="nm">${n}</span></button>`).join("")}</div>`;
+    $("#quit").onclick=home;
+    $("#tg").onclick=()=>{hide=!hide;render()};
+    app.querySelectorAll(".dex button").forEach(b=>b.onclick=()=>b.classList.toggle("hid"));
+  };
+  render();
+}
+
+document.addEventListener("keydown",e=>{
+  if(!S.mode||S.locked||document.activeElement?.tagName==="INPUT") return;
+  const n=+e.key; if(n>=1&&n<=4){const b=app.querySelectorAll(".opt")[n-1]; if(b) b.click();}
+});
+home();
+</script>
+</body>
+</html>
